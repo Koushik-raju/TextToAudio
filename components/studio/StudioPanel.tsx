@@ -174,10 +174,11 @@ export function StudioPanel() {
                   <div className="relative">
                     {musicTracks.length > 0 && (
                       <Select
-                        id="music-track"
-                        value={state.musicLibraryId || ""}
-                        onChange={(e) => setMusicLibraryId(e.target.value)}
-                      >
+  id="music-track"
+  label="Music Track"
+  value={state.musicLibraryId || ""}
+  onChange={setMusicLibraryId}
+>
                         {musicTracks.map((track) => (
                           <option key={track.id} value={track.id}>
                             {track.name}
