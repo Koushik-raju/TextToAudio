@@ -161,17 +161,17 @@ export async function mixAudioTracks(options: MixingOptions): Promise<void> {
 
     // Filter definition:
     // 1. Scale background track volume
-    // 2. Apply 3-second fade-in at the start
+    // 2. Apply 1-second fade-in (fast start so narration isn't drowned out)
     // 3. Apply 3-second fade-out at the end of the voice track duration
     // 4. Mix voice track (Input 0) and background track (Input 1)
-    const mixFilter = `[1:a]volume=${volumeScale}[bg_vol];[bg_vol]afade=t=in:ss=0:d=3[bg_fadein];[bg_fadein]afade=t=out:st=${fadeOutStart}:d=3[bg_fade];[0:a][bg_fade]amix=inputs=2:duration=first:dropout_transition=0[out]`;
+    const mixFilter = `[1:a]volume=${volumeScale}[bg_vol];[bg_vol]afade=t=in:ss=0:d=1[bg_fadein];[bg_fadein]afade=t=out:st=${fadeOutStart}:d=3[bg_fade];[0:a][bg_fade]amix=inputs=2:duration=first:dropout_transition=0[out]`;
 
     const mixArgs = [
       "-y",
       "-i", voiceWavPath,
-      "-stream_loop", "-1", // Loop the background track infinitely
       "-i", backgroundMusicPath,
       "-filter_complex", mixFilter,
+      "-shortest",
       "-map", "[out]", mixedWavPath,
     ];
 

@@ -3,19 +3,84 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f1419;
-  --foreground: #e8edf2;
+  --background: #000000; /* pitch black */
+  --foreground: #e8edf2; /* light text */
+  --accent: #ff6600; /* orange accent */
 }
+
+
+
+@layer utilities {
+  .slider-input {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      #7c9cff 0%,
+      #7c9cff var(--slider-progress, 50%),
+      #2d3a4f var(--slider-progress, 50%),
+      #2d3a4f 100%
+    );
+    cursor: pointer;
+  }
+
+  .slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #7c9cff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease;
+  }
+
+  .slider-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+
+  .slider-input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #7c9cff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+  }
+
+  .slider-input:focus-visible {
+    outline: 2px solid rgba(124, 156, 255, 0.5);
+    outline-offset: 4px;
+    border-radius: 9999px;
+  }
+}
+
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* Accent colors */
+
+
 
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  color: var(--foreground);
   background: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
 }
+
+
+
+
 
 @layer utilities {
   .slider-input {

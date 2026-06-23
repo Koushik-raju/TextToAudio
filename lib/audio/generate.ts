@@ -81,9 +81,14 @@ export async function generateMeditationAudio(
   const voiceTextChunks: string[] = [];
   const silenceDurations: number[] = [];
 
-  // Determine pause silence durations (in seconds)
-  let sentenceSilence = 1.2;
-  let paragraphSilence = 3.0;
+    // If background music is enabled, use a lighter pause to speed up generation
+  if (request.musicVolume > 0 && request.pauseStrength !== "none") {
+    request.pauseStrength = "light";
+  }
+
+  // Silence durations (seconds) – will be set by the pause strength switch
+  let sentenceSilence = 0;
+  let paragraphSilence = 0;
 
   switch (request.pauseStrength) {
     case "none":

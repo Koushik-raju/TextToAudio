@@ -10,7 +10,6 @@ import { VoiceSelector } from "@/components/studio/VoiceSelector";
 import { ExportPanel } from "@/components/studio/ExportPanel";
 import { Select } from "@/components/ui/FormControls";
 import { useStudioState } from "@/hooks/useStudioState";
-import { MUSIC_TRACK_OPTIONS } from "@/lib/constants/music";
 import type { PauseStrength } from "@/lib/types/studio.types";
 
 export function StudioPanel() {
@@ -28,12 +27,20 @@ export function StudioPanel() {
     canGenerate,
   } = useStudioState();
 
-  // Local state for built-in music preview
+  // Local state for music tracks and preview
+  const [musicTracks, setMusicTracks] = useState<any[]>([]);
   const [musicMode, setMusicMode] = useState<"library" | "upload">("library");
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const activeTrack = MUSIC_TRACK_OPTIONS.find(
+  useEffect(() => {
+    fetch("/api/music-tracks")
+      .then((res) => res.json())
+      .then((data) => setMusicTracks(data))
+      .catch((err) => console.error("Failed to load tracks", err));
+  }, []);
+
+  const activeTrack = musicTracks.find(
     (t) => t.id === state.musicLibraryId
   );
 
@@ -48,8 +55,8 @@ export function StudioPanel() {
 
   // Sync state if tabs are toggled
   useEffect(() => {
-    if (musicMode === "library" && !state.musicLibraryId) {
-      setMusicLibraryId(MUSIC_TRACK_OPTIONS[0].id);
+    if (musicMode === "library" && !state.musicLibraryId && musicTracks.length > 0) {
+      setMusicLibraryId(musicTracks[0]?.id || null);
       setBackgroundMusic(null);
     } else if (musicMode === "upload") {
       if (state.musicLibraryId !== null) {
@@ -60,7 +67,7 @@ export function StudioPanel() {
         setPreviewPlaying(false);
       }
     }
-  }, [musicMode, state.musicLibraryId, setMusicLibraryId, setBackgroundMusic]);
+  }, [musicMode, state.musicLibraryId, setMusicLibraryId, setBackgroundMusic, musicTracks]);
 
   // Load preview source on change
   useEffect(() => {
@@ -165,19 +172,19 @@ export function StudioPanel() {
               {musicMode === "library" ? (
                 <div className="space-y-3">
                   <div className="relative">
-                    <Select
-                      id="music-library"
-                      label="Select Ambient Track"
-                      value={state.musicLibraryId ?? ""}
-                      onChange={(val) => setMusicLibraryId(val || null)}
-                      hint="Choose a pre-selected high-quality ambient background track."
-                    >
-                      {MUSIC_TRACK_OPTIONS.map((track) => (
-                        <option key={track.id} value={track.id}>
-                          {track.name}
-                        </option>
-                      ))}
-                    </Select>
+                    {musicTracks.length > 0 && (
+                      <Select
+                        id="music-track"
+                        value={state.musicLibraryId || ""}
+                        onChange={(e) => setMusicLibraryId(e.target.value)}
+                      >
+                        {musicTracks.map((track) => (
+                          <option key={track.id} value={track.id}>
+                            {track.name}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
 
                     {/* Preview Play/Pause button */}
                     {activeTrack && (

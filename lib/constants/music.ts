@@ -6,26 +6,29 @@ export interface MusicTrackOption {
   src: string;
 }
 
-export const MUSIC_TRACK_OPTIONS: MusicTrackOption[] = [
-  {
-    id: "ocean",
-    name: "Ocean Breeze",
-    description: "Serene wave sounds for breathing and grounding",
-    filename: "ocean.mp3",
-    src: "/music/ocean.mp3",
-  },
-  {
-    id: "bowls",
-    name: "Tibetan Bowls",
-    description: "Harmonic singing bowls for deep focus and meditation",
-    filename: "bowls.mp3",
-    src: "/music/bowls.mp3",
-  },
-  {
-    id: "cosmos",
-    name: "Deep Space Drone",
-    description: "Atmospheric cosmic background for deep relaxation",
-    filename: "cosmos.mp3",
-    src: "/music/cosmos.mp3",
-  },
-];
+import type { MusicTrackOption } from "@/lib/types/studio.types";
+
+// Export a default empty list for the client bundle.
+export const MUSIC_TRACK_OPTIONS: MusicTrackOption[] = [];
+
+// Server‑only loading of actual tracks from the public/music folder.
+if (typeof window === "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fs = require("fs");
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const path = require("path");
+  const musicDir = path.join(process.cwd(), "public", "music");
+  if (fs.existsSync(musicDir)) {
+    const files = fs.readdirSync(musicDir).filter((f: string) => f.endsWith('.mp3'));
+    for (let idx = 0; idx < files.length; idx++) {
+      const filename = files[idx];
+      MUSIC_TRACK_OPTIONS.push({
+        id: `track-${idx}`,
+        name: filename.replace(/[-_\.mp3]+/g, " ").trim(),
+        description: "User‑provided track",
+        filename,
+        src: `/music/${filename}`,
+      });
+    }
+  }
+}
