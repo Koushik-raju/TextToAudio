@@ -135,6 +135,13 @@ export function StudioPanel() {
   }, [compressionEnabled]);
 
   // Sync state if tabs are toggled
+  // Auto‑play preview when effect parameters change
+  useEffect(() => {
+    if (previewAudioRef.current && !previewPlaying) {
+      // Attempt to play – ignore any promise rejections (e.g., autoplay blocked)
+      previewAudioRef.current.play().catch(() => {});
+    }
+  }, [bassGain, trebleGain, reverbEnabled, reverbMix, compressionEnabled]);
   useEffect(() => {
     if (musicMode === "library" && !state.musicLibraryId && musicTracks.length > 0) {
       setMusicLibraryId(musicTracks[0]?.id || null);
