@@ -15,15 +15,26 @@ export function ExportPanel({
   voiceMp3Url,
   voiceWavUrl,
 }: ExportPanelProps) {
-  const triggerDownload = (url: string | null, filename: string) => {
+  const triggerDownload = async (url: string | null, filename: string) => {
     if (!url) return;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error('Download failed', response.statusText);
+        return;
+      }
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+      console.error('Error during download', e);
+    }
   };
 
   const hasTracks = mp3Url || wavUrl || voiceMp3Url || voiceWavUrl;
