@@ -32,12 +32,70 @@ export function StudioPanel() {
   const [musicMode, setMusicMode] = useState<"library" | "upload">("library");
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContext = useRef<AudioContext | null>(null);
+  const sourceNode = useRef<MediaElementAudioSourceNode | null>(null);
+  const bassFilter = useRef<BiquadFilterNode | null>(null);
+  const trebleFilter = useRef<BiquadFilterNode | null>(null);
+  const convolverNode = useRef<ConvolverNode | null>(null);
+  const reverbGainNode = useRef<GainNode | null>(null);
+  const compressorNode = useRef<DynamicsCompressorNode | null>(null);
+  const [bassGain, setBassGain] = useState(0);
+  const [trebleGain, setTrebleGain] = useState(0);
 
+  const [reverbEnabled, setReverbEnabled] = useState(false);
+  const [reverbMix, setReverbMix] = useState(0);
+  const [compressionEnabled, setCompressionEnabled] = useState(false);
   useEffect(() => {
     fetch("/api/music-tracks")
       .then((res) => res.json())
       .then((data) => setMusicTracks(data))
       .catch((err) => console.error("Failed to load tracks", err));
+  }, []);
+
+  // Initialize AudioContext and filters for preview
+  useEffect(() => {
+    if (previewAudioRef.current && !audioContext.current) {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContext.current = ctx;
+      const source = ctx.createMediaElementSource(previewAudioRef.current);
+      const bass = ctx.createBiquadFilter();
+      bass.type = "lowshelf";
+      bass.frequency.value = 100;
+      const treble = ctx.createBiquadFilter();
+      treble.type = "highshelf";
+      treble.frequency.value = 3000;
+      // Reverb (Convolver) setup
+      const convolver = ctx.createConvolver();
+      // Simple impulse response
+      const length = ctx.sampleRate * 2;
+      const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+      for (let channel = 0; channel < 2; channel++) {
+        const channelData = impulse.getChannelData(channel);
+        for (let i = 0; i < length; i++) {
+          channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+        }
+      }
+      convolver.buffer = impulse;
+      const reverbGain = ctx.createGain();
+      reverbGain.gain.value = 0; // start muted
+      // Compression
+      const compressor = ctx.createDynamicsCompressor();
+      compressor.threshold.value = 0; // start neutral
+      // Connect nodes
+      source.connect(bass);
+      bass.connect(treble);
+      treble.connect(convolver);
+      convolver.connect(reverbGain);
+      reverbGain.connect(compressor);
+      compressor.connect(ctx.destination);
+      // Store refs
+      sourceNode.current = source;
+      bassFilter.current = bass;
+      trebleFilter.current = treble;
+      convolverNode.current = convolver;
+      reverbGainNode.current = reverbGain;
+      compressorNode.current = compressor;
+    }
   }, []);
 
   const activeTrack = musicTracks.find(
@@ -52,6 +110,29 @@ export function StudioPanel() {
       previewAudioRef.current.play();
     }
   };
+
+  // Update filter gains when sliders change
+  useEffect(() => {
+    if (bassFilter.current) bassFilter.current.gain.value = bassGain;
+  }, [bassGain]);
+
+  useEffect(() => {
+    if (trebleFilter.current) trebleFilter.current.gain.value = trebleGain;
+  }, [trebleGain]);
+
+  // Reverb mix (wet gain)
+  useEffect(() => {
+    if (reverbGainNode.current) {
+      reverbGainNode.current.gain.value = reverbEnabled ? reverbMix / 100 : 0;
+    }
+  }, [reverbMix, reverbEnabled]);
+
+  // Compression toggle
+  useEffect(() => {
+    if (compressorNode.current) {
+      compressorNode.current.threshold.value = compressionEnabled ? -24 : 0;
+    }
+  }, [compressionEnabled]);
 
   // Sync state if tabs are toggled
   useEffect(() => {
@@ -174,11 +255,11 @@ export function StudioPanel() {
                   <div className="relative">
                     {musicTracks.length > 0 && (
                       <Select
-  id="music-track"
-  label="Music Track"
-  value={state.musicLibraryId || ""}
-  onChange={setMusicLibraryId}
->
+                        id="music-track"
+                        label="Music Track"
+                        value={state.musicLibraryId || ""}
+                        onChange={setMusicLibraryId}
+                      >
                         {musicTracks.map((track) => (
                           <option key={track.id} value={track.id}>
                             {track.name}
@@ -228,6 +309,30 @@ export function StudioPanel() {
               />
             </div>
           </section>
+
+           {/* Audio Effects */}
+           <section className="rounded-2xl border border-studio-border bg-studio-surface/60 p-5 shadow-card backdrop-blur sm:p-6">
+             <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-studio-muted">Audio Effects</h2>
+             <div className="space-y-4">
+               <label className="flex items-center gap-2">
+                 <input type="checkbox" checked={reverbEnabled} onChange={(e) => setReverbEnabled(e.target.checked)} />
+                 <span className="text-sm text-studio-muted">Reverb</span>
+               </label>
+               <input
+                 type="range"
+                 min={0}
+                 max={100}
+                 value={reverbMix}
+                 onChange={(e) => setReverbMix(Number(e.target.value))}
+                 disabled={!reverbEnabled}
+                 className="w-full"
+               />
+               <label className="flex items-center gap-2">
+                 <input type="checkbox" checked={compressionEnabled} onChange={(e) => setCompressionEnabled(e.target.checked)} />
+                 <span className="text-sm text-studio-muted">Compression</span>
+               </label>
+             </div>
+           </section>
 
           {/* Generator Preview Panel */}
           <section className="rounded-2xl border border-studio-border bg-studio-surface/60 p-5 shadow-card backdrop-blur sm:p-6">

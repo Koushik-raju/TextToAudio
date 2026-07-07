@@ -37,6 +37,34 @@ export const VOICE_OPTIONS: VoiceOption[] = [
     language: "English (US)",
     neuralVoice: "en-US-JennyNeural",
   },
+  {
+    id: "calm-female-3",
+    name: "Tranquil — Female",
+    description: "Calm, melodic tone for deep relaxation",
+    language: "English (US)",
+    neuralVoice: "en-US-AvaNeural",
+  },
+  {
+    id: "calm-female-4",
+    name: "Peaceful — Female",
+    description: "Soft, gentle voice for bedtime meditations",
+    language: "English (US)",
+    neuralVoice: "en-US-JaneNeural",
+  },
+  {
+    id: "calm-female-5",
+    name: "Luminous — Female",
+    description: "Bright, uplifting voice for sunrise meditations",
+    language: "English (US)",
+    neuralVoice: "en-US-MichelleNeural",
+  },
+  {
+    id: "calm-female-6",
+    name: "Soothing — Female",
+    description: "Warm, calm voice for deep sleep sessions",
+    language: "English (US)",
+    neuralVoice: "en-US-SaraNeural",
+  },
 ];
 
 export const DEFAULT_VOICE_ID = VOICE_OPTIONS[0].id;
